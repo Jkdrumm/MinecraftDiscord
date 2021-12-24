@@ -1,72 +1,89 @@
 require("dotenv").config();
-const util = require("minecraft-server-util");
-const Discord = require("discord.js");
-const ps = require("ps-node");
-const fork = require("child_process").fork;
-const onExit = require("signal-exit");
-const propertiesReader = require("properties-reader");
-const NamedPipes = require("named-pipes");
-const Log = require("./src/log.js");
-const fs = require("fs");
+import util from "minecraft-server-util";
+import Discord, { TextChannel } from "discord.js";
+import ps from "ps-node";
+import { fork } from "child_process";
+import onExit from "signal-exit";
+import propertiesReader from "properties-reader";
+// @ts-ignore
+import NamedPipes from "named-pipes";
+import Log from "./src/log";
+import fs from "fs";
 
 const emojis = ["❗", "1️⃣", "2️⃣", "3️⃣"];
-const commands = {};
+const commands: any = {};
 fs.readdirSync("./src/commands")
-  .filter((file) => file.endsWith(".js"))
+  .filter((file) => file.endsWith(".ts"))
   .forEach((commandFile) => {
-    const command = require(`./src/commands/${commandFile}`);
-    if (command.prefix && command.run) {
-      commands[command.prefix] = {
-        run: command.run,
-        permissionLevel: command.permissionLevel,
-        description: command.description,
-      };
-    }
+    import(`./src/commands/${commandFile}`).then(
+      ({ default: { prefix, permissionLevel, description, run } }) => {
+        if (prefix && permissionLevel && run) {
+          commands[prefix] = {
+            run,
+            permissionLevel,
+            description,
+          };
+        }
+      }
+    );
   });
 
-const TOKEN = process.env.TOKEN;
 const bot = new Discord.Client();
 const logger = new Log();
 const pipeInput = NamedPipes.listen("bedbot-pipe-input");
 const properties = propertiesReader("settings.properties");
 
-const serverCommands = {};
+const serverCommands: any = {};
 properties.each((key, value) => {
   if (key.startsWith("discord.command."))
     serverCommands[key.substring(16)] = value;
 });
 
-let server = null;
-let backLog = [];
-pipeInput.on("connect", (client) => {
+let serverID = properties.getRaw("discord.server")?.toString();
+let logChannel = properties.getRaw("discord.channel.log")?.toString();
+let rolesChannel = properties.getRaw("discord.channel.roles")?.toString();
+
+let serverURL = properties.getRaw("server.url")?.toString();
+let serverPort = properties.get("server.port")?.toString();
+
+let botToken = properties.getRaw("bot.token")?.toString();
+
+let server: any = null;
+let backLog: string[] = [];
+pipeInput.on("connect", (client: any) => {
   server = client;
   logger.logInfo("Input Pipe Connected");
-  while (backLog.length !== 0) logger.logBacklog(backLog.shift());
+  while (backLog.length !== 0) logger.logBacklog(backLog.shift() as string);
 });
 
 const Status = Object.freeze({
-  ONLINE: "Server is Online",
+  ONLINE: "Minecraft",
   OFFLINE: "Server is Offline",
   RESTARTING: "Server is Restarting...",
   HOSTNAME_PORT_ERROR: "ERROR: Check Port Forwarding or DNS Configuration",
 });
 
-const login = () =>
-  bot.login(TOKEN).catch(() => {
-    logger.logError("Unable to login. Retrying in 30 seconds.");
-    setTimeout(login, 30000);
-  });
+const login = () => {
+  if (botToken)
+    bot.login(botToken).catch(() => {
+      logger.logError("Unable to login. Retrying in 30 seconds.");
+      setTimeout(login, 30000);
+    });
+};
 login();
 
 let freshBoot = true;
-let displayedActivity = null;
+let displayedActivity: string | null = null;
 let displayedNumPlayers = 0;
 let rolesMessage = null;
 bot.on("ready", () => {
-  logger.logInfo(`Logged in as ${bot.user.tag}`);
+  logger.logInfo(`Logged in as ${bot.user?.tag}`);
   if (freshBoot) {
     displayedActivity = Status.OFFLINE;
-    bot.user.setPresence({ status: "dnd", activity: { name: Status.OFFLINE } });
+    bot.user?.setPresence({
+      status: "dnd",
+      activity: { name: Status.OFFLINE },
+    });
     freshBoot = false;
   } else {
     const message = "Internet connection was temporarily lost";
@@ -77,42 +94,56 @@ bot.on("ready", () => {
   setupReactions();
 });
 
-const addReactions = (message, reactions) => {
+const addReactions = (message: any, reactions: any[]) => {
   if (reactions.length !== 0) {
     message.react(reactions.shift());
     setTimeout(() => addReactions(message, reactions), 750);
   }
 };
 
-const getEmoji = (emojiName) =>
-  bot.emojis.resolveID((emoji) => emoji.name === emojiName);
+// const getEmoji = (emojiName: any) =>
+//   bot.emojis.resolveID((emoji: { name: any }) => emoji.name === emojiName);
 
 const setupReactions = () => {
-  bot.channels.fetch(process.env.CHANNEL_ROLES_ID).then((channel) => {
-    const reactionMessage =
-      "Be notified when people are playing!" +
-      "\nCustomize your notifications how you want" +
-      "\n❗ = Be notified when anyone joins the server" +
-      "\n1️⃣-9️⃣ = Be notified when there are this many players playing";
-    channel.messages.fetch().then((messages) => {
-      if (messages.size > 0) {
-        messages.forEach((message) => {
-          rolesMessage = message;
-          message.edit(reactionMessage);
-          addReactions(message, emojis);
-        });
-      } else
-        channel.send(reactionMessage).then((message) => {
-          rolesMessage = message;
-          addReactions(rolesMessage, emojis);
-        });
+  if (rolesChannel)
+    bot.channels.fetch(rolesChannel).then((channel: any) => {
+      const reactionMessage =
+        "Be notified when people are playing!" +
+        "\nCustomize your notifications how you want" +
+        "\n❗ = Be notified when anyone joins the server" +
+        "\n1️⃣-9️⃣ = Be notified when there are this many players playing";
+      channel.messages
+        .fetch()
+        .then(
+          (messages: {
+            size: number;
+            forEach: (arg0: (message: any) => void) => void;
+          }) => {
+            if (messages.size > 0) {
+              messages.forEach((message: { edit: (arg0: string) => void }) => {
+                rolesMessage = message;
+                message.edit(reactionMessage);
+                addReactions(message, emojis);
+              });
+            } else
+              channel.send(reactionMessage).then((message: any) => {
+                rolesMessage = message;
+                addReactions(rolesMessage, emojis);
+              });
+          }
+        );
     });
-  });
 };
 
 bot.on("disconnect", () => {
   logger.logError("Disconnected");
   login();
+});
+
+bot.on("error", (error: any) => logger.logError(error.stack));
+
+bot.on("reconnecting", (message) => {
+  logger.logInfo(message);
 });
 
 bot.on("unhandledRejection", (error) => logger.logError(error.stack));
@@ -159,11 +190,10 @@ bot.on("message", (message) => {
 
 const checkServerStatus = () => {
   if (server === null) connectToServer();
-  else
+  else if (serverURL)
     util
-      .statusBedrock(process.env.SERVER_URL, {
-        port: Number(process.env.SERVER_PORT),
-        enableSRV: true,
+      .statusBedrock(serverURL, {
+        port: Number(serverPort),
         timeout: 1000,
       })
       .catch((error) => {
@@ -179,8 +209,8 @@ const checkForLocalProcess = () => {
     {
       command: "bedrock_server.exe",
     },
-    (err, resultList) => {
-      if (err) throw new Error(err);
+    (error: any, resultList) => {
+      if (error) throw new Error(error);
       if (resultList.length !== 0) {
         // Server is running OUTSIDE the wrapper. Shut 'em down, boys.
         resultList.forEach((serverInstance) =>
@@ -204,13 +234,13 @@ const startServer = () => {
   setTimeout(connectToServer, 100);
 };
 
-const setServerStatus = (currentActivity, currentNumPlayers = 0) => {
+const setServerStatus = (currentActivity: string, currentNumPlayers = 0) => {
   if (displayedActivity !== currentActivity) {
     logger.logInfo(`Changing status to '${currentActivity}'`);
     displayedActivity = currentActivity;
     switch (currentActivity) {
       case Status.OFFLINE:
-        bot.user.setPresence({
+        bot.user?.setPresence({
           status: "dnd",
           activity: { name: currentActivity },
         });
@@ -218,7 +248,7 @@ const setServerStatus = (currentActivity, currentNumPlayers = 0) => {
         logger.logError("Server is down");
         break;
       case Status.RESTARTING:
-        bot.user.setPresence({
+        bot.user?.setPresence({
           status: "idle",
           activity: { name: currentActivity },
         });
@@ -226,18 +256,21 @@ const setServerStatus = (currentActivity, currentNumPlayers = 0) => {
         logger.logInfo("Server is Restarting...");
         break;
       case Status.HOSTNAME_PORT_ERROR:
-        bot.user.setPresence({
+        bot.user?.setPresence({
           status: "dnd",
           activity: { name: currentActivity },
         });
         logger.logError(
-          `Unable to reach server at ${process.env.SERVER_URL}:${process.env.SERVER_PORT}. Are your ports forwarded and is your DNS hostname configured correctly?`
+          `Unable to reach server at ${serverURL}:${serverPort}. Are your ports forwarded and is your DNS hostname configured correctly?`
         );
         break;
+      case Status.ONLINE:
       default:
-        bot.user.setPresence({
+        bot.user?.setPresence({
           status: "online",
-          activity: { name: `${currentActivity} (${currentNumPlayers})` },
+          activity: {
+            name: `${currentActivity}: ${currentNumPlayers}`,
+          },
         });
         displayedNumPlayers = currentNumPlayers;
         sendMessage(`Hooray! The server has returned!`);
@@ -247,23 +280,21 @@ const setServerStatus = (currentActivity, currentNumPlayers = 0) => {
     currentActivity === Status.ONLINE &&
     displayedNumPlayers !== currentNumPlayers
   ) {
-    bot.user.setActivity(`${currentActivity} (${currentNumPlayers})`);
+    bot.user?.setActivity(`${currentActivity}: ${currentNumPlayers}`);
     displayedNumPlayers = currentNumPlayers;
   }
 };
 
-const sendMessage = (message) =>
-  bot.channels
-    .fetch(process.env.CHANNEL_LOG_ID)
-    .then((channel) =>
-      channel
-        .send(message)
-        .catch((error) =>
-          logger.logError(
-            `${error} for sending messages to channel ${process.env.CHANNEL_LOG_ID}`
-          )
+const sendMessage = (message: string) => {
+  if (logChannel)
+    (bot.channels.cache.get(logChannel) as TextChannel)
+      .send(message)
+      .catch((error: any) =>
+        logger.logError(
+          `${error} for sending messages to channel ${logChannel}`
         )
-    );
+      );
+};
 
 const connectToServer = () => {
   let pipeOutput;
@@ -272,29 +303,32 @@ const connectToServer = () => {
   } catch (error) {
     console.log(error);
   }
-  pipeOutput.on("info", (data) => logger.logInfo(data));
-  pipeOutput.on("warn", (warning) => logger.logWarning(warning));
-  pipeOutput.on("error", (error) => logger.logError(error));
-  pipeOutput.on("backlog", (data) => {
+  pipeOutput.on("info", (data: string) => logger.logInfo(data));
+  pipeOutput.on("warn", (warning: string) => logger.logWarning(warning));
+  pipeOutput.on("error", (error: string) => logger.logError(error));
+  pipeOutput.on("backlog", (data: string) => {
     if (server) logger.logBacklog(data);
     else backLog.push(data);
   });
-  pipeOutput.on("numPlayers", (numPlayers) => {
+  pipeOutput.on("numPlayers", (numPlayers: any) => {
     setServerStatus(Status.ONLINE, Number(numPlayers));
   });
-  pipeOutput.on("get", (input) => {
-    const { requestID, results } = JSON.parse(input);
-    const { command, callback } = serverRequests.find(
-      (request) => request.requestID === requestID
-    );
-    serverRequests.splice(
-      serverRequests.indexOf({ requestID, command, callback }),
-      1
-    );
-    if (commands[command]) callback(results);
-    else logger.logError(`Unknown command '${command}'`);
+  pipeOutput.on("get", (input: string) => {
+    if (serverRequests.length) {
+      const { requestID, results } = JSON.parse(input);
+      const { command, callback } = serverRequests.find(
+        (request) => request.requestID === requestID
+      ) as { requestID: number; command: string; callback: any };
+      serverRequests.splice(
+        serverRequests.indexOf({ requestID, command, callback }),
+        1
+      );
+      if (commands[command]) callback(results);
+      else logger.logError(`Unknown command '${command}'`);
+    } else
+      logger.logError(`Attempted request callback when request list empty`);
   });
-  pipeOutput.on("server", (event) => {
+  pipeOutput.on("server", (event: string) => {
     console.log("Got: " + event);
     switch (event) {
       case "start":
@@ -314,23 +348,25 @@ const connectToServer = () => {
   server = pipeOutput;
 };
 
-let serverRequests = [];
+let serverRequests: { requestID: number; command: string; callback: any }[] =
+  [];
 let requestID = 0;
-const requestServerData = (command, callback) => {
+const requestServerData = (command: any, callback: any) => {
   serverRequests.push({ requestID, command, callback });
   server.send("get", JSON.stringify({ requestID: requestID, command }));
   requestID++;
 };
 
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", (error: any) => {
   if (error.address !== "\\\\.\\pipe\\bedbot-pipe-output")
     logger.logError(error.stack.substring(7));
   else startServer();
 });
-process.on("unhandledRejection", (error) => {
+process.on("unhandledRejection", (error: any) => {
   logger.logError(error.stack.substring(7));
 });
 
 onExit(() => {
+  console.log("Exiting");
   bot.user?.setPresence({ status: "invisible", activity: {} });
 });

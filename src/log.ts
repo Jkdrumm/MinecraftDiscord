@@ -1,9 +1,9 @@
-const fs = require("fs");
+import { createWriteStream, close, open } from "fs";
 class Log {
   #creatingLogFile;
-  #backLog;
-  #stream;
-  #currentFileName;
+  #backLog: { now: Date; message: String }[];
+  #stream: any;
+  #currentFileName: string | null;
 
   constructor() {
     this.#creatingLogFile = false;
@@ -12,46 +12,50 @@ class Log {
     this.#currentFileName = null;
   }
 
-  #log(message, now = new Date()) {
+  #log(message: string, now = new Date()) {
     const fileName = `logs/${now
       .toLocaleDateString()
       .toString()
       .replace(/\//g, "-")}.log`;
     try {
       if (this.#currentFileName !== fileName) {
-        this.#stream = fs.createWriteStream(fileName, {
+        this.#stream = createWriteStream(fileName, {
           flags: "a",
         });
       }
       this.#backLog.push({ now, message });
       while (this.#backLog.length !== 0) {
-        const { now, message } = this.#backLog.shift();
+        const { now, message } = this.#backLog.shift() as {
+          now: Date;
+          message: String;
+        };
         this.#stream.write(`[${now}] ${message}\n`);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === "ENOENT")
         if (!this.#creatingLogFile) {
           this.#creatingLogFile = true;
           this.#currentFileName = fileName;
-          fs.close(fs.open(fileName, "w")).then(() => log(message, now));
+          close(this.#stream);
+          open(fileName, "w", () => this.#log(message, now));
         } else this.#backLog.push({ now, message });
       else console.error(error);
     }
   }
 
-  logError(message) {
+  logError(message: string) {
     this.#log(`ERROR: ${message}`);
   }
 
-  logWarning(message) {
+  logWarning(message: string) {
     this.#log(`WARNING: ${message}`);
   }
 
-  logInfo(message) {
+  logInfo(message: string) {
     this.#log(`INFO: ${message}`);
   }
 
-  logBacklog(data) {
+  logBacklog(data: string) {
     let { type, now, message } = JSON.parse(data);
     now = new Date(now);
     switch (type) {
@@ -67,4 +71,4 @@ class Log {
   }
 }
 
-module.exports = Log;
+export default Log;

@@ -1,25 +1,54 @@
 const exec = require("child_process").exec;
-const { readdirSync } = require("fs");
-const propertiesReader = require("properties-reader");
-const onExit = require("signal-exit");
-const ps = require("ps-node");
-const NamedPipes = require("named-pipes");
+import { readdirSync } from "fs";
+import propertiesReader from "properties-reader";
+import onExit from "signal-exit";
+import ps from "ps-node";
+// @ts-ignore
+import NamedPipes from "named-pipes";
 
 const properties = propertiesReader("settings.properties");
 const pipeOutput = NamedPipes.listen("bedbot-pipe-output");
-const serverFolders = properties.get("server.folders");
-let discordBot = null;
-const folders = readdirSync(serverFolders, {
-  withFileTypes: true,
-})
-  .filter((dirent) => dirent.isDirectory())
-  .map((dirent) => dirent.name)
-  .sort();
-const newestFolder = folders[folders.length - 1];
+const serverFolders = properties.get("server.folders")?.toString();
+let newestFolder: string | null = null;
+let discordBot: any = null;
+if (serverFolders) {
+  const folders = readdirSync(serverFolders, {
+    withFileTypes: true,
+  })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => dirent.name)
+    .sort();
+  newestFolder = folders[folders.length - 1];
+}
 
-const serverSettings = [];
-const players = [];
-const processData = (data) => {
+type serverSettingFields =
+  | "version"
+  | "ipv4"
+  | "ipv6"
+  | "level"
+  | "session"
+  | "gamemode"
+  | "difficulty";
+
+const serverSettings: {
+  version: string;
+  ipv4: string;
+  ipv6: string;
+  level: string;
+  session: string;
+  gamemode: string;
+  difficulty: string;
+} = {
+  version: "",
+  ipv4: "",
+  ipv6: "",
+  level: "",
+  session: "",
+  gamemode: "",
+  difficulty: "",
+};
+const players: { username: string; xuid: string }[] = [];
+const processData = (data: string) => {
   if (data.startsWith("Player")) {
     const playerRawData = data.split(",");
     const playerObject = {
@@ -60,8 +89,8 @@ const processData = (data) => {
     discordBot?.send("settings", JSON.stringify(serverSettings));
 };
 
-const backLog = [];
-const sendInfo = (data) => {
+const backLog: { type: string; now: Date; message: string }[] = [];
+const sendInfo = (data: string) => {
   if (data !== "Running AutoCompaction...") {
     processData(data);
     if (discordBot) discordBot.send("info", data);
@@ -69,17 +98,17 @@ const sendInfo = (data) => {
   }
 };
 
-const sendWarning = (warning) => {
+const sendWarning = (warning: string) => {
   if (discordBot) discordBot.send("warn", warning);
   else backLog.push({ type: "warn", now: new Date(), message: warning });
 };
 
-const sendError = (error) => {
+const sendError = (error: string) => {
   if (discordBot) discordBot.send("error", error);
   else backLog.push({ type: "error", now: new Date(), message: error });
 };
 
-let serverPID = null;
+let serverPID: number | null = null;
 const startServer = () => {
   const newServer = exec(
     `"${serverFolders}\\${newestFolder}\\bedrock_server.exe"`,
@@ -97,8 +126,8 @@ const startServer = () => {
     {
       command: "bedrock_server.exe",
     },
-    (err, resultList) => {
-      if (err) throw new Error(err);
+    (err: any, resultList: any) => {
+      if (err !== undefined) throw new Error(err);
       if (resultList.length !== 0) {
         serverPID = resultList[0].pid;
       }
@@ -109,7 +138,7 @@ const startServer = () => {
 
 let server = startServer();
 
-const sendData = (data, type) => {
+const sendData = (data: string, type: string) => {
   data = data.trim();
   if (type === "INFO") sendInfo(data);
   else if (type === "WARN") sendWarning(data);
@@ -119,11 +148,11 @@ const sendData = (data, type) => {
   }
 };
 
-const getType = (rawData, startOutput) =>
+const getType = (rawData: string, startOutput: number) =>
   rawData.substring(startOutput - 4, startOutput);
 
 let bufferedOutput = "";
-const handleData = (data) => {
+const handleData = (data: string) => {
   const startData = data.indexOf("[");
   //const startOutput = data.indexOf("]");
   const endOutput = data.endsWith("\n");
@@ -166,27 +195,27 @@ const handleData = (data) => {
   // } else sendData(data.slice(startOutput + 2, -1), getType(data, startOutput));
 };
 
-server.stdout.on("data", (data) => {
+server.stdout.on("data", (data: string) => {
   if (data.indexOf("\n") !== -1) {
     const lines = data.split("\n");
-    lines.forEach((line, index) => {
+    lines.forEach((line: string, index: number) => {
       if (line !== "")
         handleData(`${line}${index !== lines.length - 1 ? "\n" : ""}`);
     });
   } else handleData(data);
 });
 
-pipeOutput.on("connect", (client) => {
+pipeOutput.on("connect", (client: any) => {
   discordBot = client;
   sendInfo("Output Pipe Connected");
   discordBot?.send("numPlayers", players.length);
   if (Object.keys(serverSettings).length === 7)
     discordBot?.send("settings", JSON.stringify(serverSettings));
   const pipeInput = NamedPipes.connect("bedbot-pipe-input");
-  pipeInput.on("data", (data) => {
+  pipeInput.on("data", (data: any) => {
     server.stdin.write(`${data}\n`);
   });
-  pipeInput.on("get", (input) => {
+  pipeInput.on("get", (input: string) => {
     const { requestID, command } = JSON.parse(input);
     switch (command) {
       case "players":
@@ -208,13 +237,13 @@ pipeOutput.on("connect", (client) => {
         );
         break;
       default:
-        const results = serverSettings[command];
+        const results = serverSettings[command as serverSettingFields];
         if (results)
           discordBot?.send("get", JSON.stringify({ requestID, results }));
         else sendWarning(`Unable to fetch data for ${command}`);
     }
   });
-  pipeInput.on("run", (input) => {
+  pipeInput.on("run", (input: string) => {
     let { command, user, data } = JSON.parse(input);
     data = data.replace(/(\r\n|\n|\r)/gm, " "); // Prevents sneaky people from trying to execute other commands
     switch (command) {
@@ -226,14 +255,17 @@ pipeOutput.on("connect", (client) => {
     }
   });
   while (backLog.length !== 0) {
-    const { type, now, message } = backLog.shift();
-    discordBot.send("backlog", JSON.stringify({ type, now, message }));
+    const { type, now, message } = backLog.shift() as {
+      type: string;
+      now: Date;
+      message: string;
+    };
+    discordBot?.send("backlog", JSON.stringify({ type, now, message }));
   }
 });
 
-process.on("uncaughtException", (error) => sendError(error.stack));
-process.on("unhandledRejection", (error) => sendError(error.stack));
-sendInfo(newestFolder);
+process.on("uncaughtException", (error: any) => sendError(error.stack));
+process.on("unhandledRejection", (error: any) => sendError(error.stack));
 
 const exit = () => {
   discordBot?.send("server", "process-shutdown");

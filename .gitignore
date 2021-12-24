@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -62,3 +62,10 @@ typings/
 
 # service executables
 daemon/
+
+# IDE files
+.vscode/
+
+# Settings
+settings.properties
+users.properties
