@@ -69,3 +69,11 @@ daemon/
 # Settings
 settings.properties
 users.properties
+
+# Server Downloads
+/java
+/bedrock
+
+# Build folders
+/build
+/javascript

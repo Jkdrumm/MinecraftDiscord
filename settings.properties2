@@ -1,0 +1,18 @@
+[bot]
+token=ODUxODMzMjgzNjAzOTg4NTEx.YL-BkQ.45Bb2eUklTGRhM7aVisz10r2_Vc
+
+[discord]
+server=851579777353777152
+channel.log=851916731685011456
+channel.roles=856622276408770600
+command.say=admin
+command.kick=admin
+command.setworldspawn=admin
+command.gamerule=admin
+
+[server]
+url=spookygang.serveminecraft.net
+port=19132
+folders=C:\Users\Schyt\Documents\Minecraft Bedrock Dedicated Server
+
+[channels]
