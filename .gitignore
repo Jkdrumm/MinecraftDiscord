@@ -77,3 +77,6 @@ users.properties
 # Build folders
 /build
 /javascript
+
+*.exe
+*.zip

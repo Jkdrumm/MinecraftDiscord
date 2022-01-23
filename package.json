@@ -1,7 +1,7 @@
 {
   "name": "bedbot",
-  "version": "0.0.1",
-  "description": "Discord bot for Spooky Gang",
+  "version": "0.0.3",
+  "description": "A Discord bot for managing and integrating with a Minecraft Server",
   "repository": "https://github.com/Jkdrumm/MinecraftDiscord",
   "main": "index.js",
   "scripts": {

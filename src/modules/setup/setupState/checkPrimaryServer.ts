@@ -46,7 +46,14 @@ export default class CheckPrimaryServer extends SetupState {
       message +=
         "\nReply with the number next to the server that should be my primary server";
     }
-    BotProperties.owner?.send(message);
+    try {
+      await BotProperties.owner?.send(message);
+    } catch (e) {
+      console.log(
+        "I can't DM you on discord unless we are in a mutual server. Please use the following link to add me to a server."
+      );
+      console.log(BotProperties.inviteLink);
+    }
     this.createPromise();
     return this.responsePromise;
   };

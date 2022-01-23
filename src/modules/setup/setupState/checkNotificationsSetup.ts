@@ -153,6 +153,7 @@ export default class CheckNotificationsSetup extends SetupState {
           );
           await properties?.save(propertiesPath);
           this.setupNotificationMessage();
+          this.responseResolver?.(new CheckServerRunning());
         } else this.responseResolver?.(new CheckPrimaryServer());
       }
     }
