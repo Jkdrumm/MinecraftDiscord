@@ -14,6 +14,11 @@ jest.mock("child_process", () => {
   return mock;
 });
 
+jest.mock("named-pipes", () => ({
+  listen: () => ({ on: jest.fn() }),
+  connect: { on: jest.fn() },
+}));
+
 describe("State Check Server Running", () => {
   let checkServerRunning: CheckServerRunning;
 
@@ -26,6 +31,7 @@ describe("State Check Server Running", () => {
 
   it("should start the server", () => {
     const spawnSpy = jest.spyOn(child_process, "spawn");
+    jest.useFakeTimers();
     checkServerRunning.startServer();
     expect(spawnSpy).toHaveBeenCalled();
   });
@@ -150,5 +156,6 @@ describe("State Check Server Running", () => {
     await checkServerRunning.handleMessage(message);
     expect(replySpy).toHaveBeenCalledWith(expect.stringContaining("!help"));
   });
+
   // it("Should connect to the server pipe if the server is already running", () => {});
 });
