@@ -37,7 +37,7 @@ export default class CheckPrimaryServer extends SetupState {
         let name = server.name;
         while (name === undefined)
           name = (await this.bot.client.guilds.fetch(server.id)).name;
-        message += `\n${index++}. ${server.name}`;
+        message += `\n${index++}. ${name}`;
       }
       message += `\n${index}. Add to a different server`;
       message += "```";

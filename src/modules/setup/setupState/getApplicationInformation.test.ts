@@ -8,12 +8,14 @@ const owner = { id: "owner-id" } as User;
 jest.mock("discord.js", () => {
   const discordJS = jest.createMockFromModule("discord.js") as any;
   discordJS.Client = class {
-    fetchApplication() {
-      return Promise.resolve({
-        id: id,
-        owner,
-      });
-    }
+    application = {
+      id,
+      owner,
+      partial: false,
+    };
+    users = {
+      fetch: jest.fn(() => owner),
+    };
     on() {}
   };
   return discordJS;

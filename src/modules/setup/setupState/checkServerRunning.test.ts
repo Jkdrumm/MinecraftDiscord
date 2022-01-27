@@ -10,7 +10,7 @@ import Commands, { loadCommands } from "../../command/commands";
 
 jest.mock("child_process", () => {
   const mock = jest.createMockFromModule("child_process") as any;
-  mock.fork = () => ({ unref: jest.fn() });
+  mock.spawn = () => ({ unref: jest.fn() });
   return mock;
 });
 
@@ -25,9 +25,9 @@ describe("State Check Server Running", () => {
   });
 
   it("should start the server", () => {
-    const forkSpy = jest.spyOn(child_process, "fork");
+    const spawnSpy = jest.spyOn(child_process, "spawn");
     checkServerRunning.startServer();
-    expect(forkSpy).toHaveBeenCalled();
+    expect(spawnSpy).toHaveBeenCalled();
   });
 
   it("should run each bot command for Java Edition", async () => {
@@ -35,19 +35,23 @@ describe("State Check Server Running", () => {
     for (const commandName of Object.keys(Commands)) {
       const command = Commands[commandName];
       if (command.edition !== Edition.bedrock) {
+        const isShutdown = command.prefix === "shutdown";
         const message = {
           client: checkServerRunning.bot.client,
           reply: jest.fn(),
         } as unknown as Message;
         message.content = `!${command.prefix}`;
         message.author = { client: checkServerRunning.bot.client } as User;
-        const runSpy = jest.spyOn(command, "run");
+        let spy: any;
+        if (!isShutdown) spy = jest.spyOn(command, "run");
+        else spy = jest.spyOn(ServerProperties.server, "send");
         const logInfoSpy = jest.spyOn(checkServerRunning.logger, "logInfo");
         await checkServerRunning.handleMessage(message);
         expect(logInfoSpy).toHaveBeenLastCalledWith(
           expect.stringContaining(command.prefix.toLowerCase())
         );
-        expect(runSpy).toHaveBeenCalled();
+        if (!isShutdown) expect(spy).toHaveBeenCalled();
+        else expect(spy).toHaveBeenLastCalledWith("shutdown", "");
       }
     }
   });
@@ -57,19 +61,23 @@ describe("State Check Server Running", () => {
     for (const commandName of Object.keys(Commands)) {
       const command = Commands[commandName];
       if (command.edition !== Edition.java) {
+        const isShutdown = command.prefix === "shutdown";
         const message = {
           client: checkServerRunning.bot.client,
           reply: jest.fn(),
+          content: `!${command.prefix}`,
+          author: { client: checkServerRunning.bot.client } as User,
         } as unknown as Message;
-        message.content = `!${command.prefix}`;
-        message.author = { client: checkServerRunning.bot.client } as User;
-        const runSpy = jest.spyOn(command, "run");
+        let spy: any;
+        if (!isShutdown) spy = jest.spyOn(command, "run");
+        else spy = jest.spyOn(ServerProperties.server, "send");
         const logInfoSpy = jest.spyOn(checkServerRunning.logger, "logInfo");
         await checkServerRunning.handleMessage(message);
         expect(logInfoSpy).toHaveBeenLastCalledWith(
           expect.stringContaining(command.prefix.toLowerCase())
         );
-        expect(runSpy).toHaveBeenCalled();
+        if (!isShutdown) expect(spy).toHaveBeenCalled();
+        else expect(spy).toHaveBeenLastCalledWith("shutdown", "");
       }
     }
   });

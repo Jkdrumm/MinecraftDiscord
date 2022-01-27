@@ -4,6 +4,7 @@ import SetSeed from "./setSeed";
 
 jest.mock("fs", () => ({
   existsSync: jest.fn(() => false),
+  mkdirSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   readdirSync: () => [],

@@ -13,6 +13,7 @@ let fileExists: boolean;
 
 jest.mock("fs", () => ({
   existsSync: jest.fn(() => fileExists),
+  mkdirSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   readdirSync: () => [],
@@ -39,6 +40,8 @@ describe("State Check For World", () => {
   });
 
   it("should not prompt the user if a world is found", () => {
+    levelName = "superAwesomeMinecraftLevel";
+    fileExists = true;
     const owner = {
       client: checkForWorld.bot.client,
       send: jest.fn(),

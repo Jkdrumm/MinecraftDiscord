@@ -61,4 +61,4 @@ npm install -g pkg
 npm run build
 ```
 
-3. Run "Server.exe" found in the build folder
+3. Run "DiscordBot.exe" found in the build folder

@@ -14,12 +14,14 @@ const validMockGuilds: { name?: string; id: string }[] = [
   { name: "server-2", id: "def" },
   { name: "server-3", id: "ghi" },
 ];
-let mockGuilds = validMockGuilds;
-let mockGuildsCache = {
+let currentGuilds = validMockGuilds;
+let mockGuilds = {
   cache: {
-    values: () => mockGuilds,
-    size: mockGuilds.length,
+    values: () => currentGuilds,
+    size: currentGuilds.length,
+    get: () => {},
   },
+  fetch: (id: string) => validMockGuilds.find((guild) => guild.id === id),
 };
 jest.mock("properties-reader", () => () => ({
   getRaw: () => serverID,
@@ -32,10 +34,7 @@ jest.mock("discord.js", () => {
   mock.Client = class {
     on = jest.fn();
     removeAllListeners = jest.fn();
-    guilds = {
-      cache: mockGuildsCache,
-      fetch: (id: string) => validMockGuilds.find((guild) => guild.id === id),
-    };
+    guilds = mockGuilds;
   };
   return mock;
 });
@@ -60,7 +59,7 @@ describe("State Check Primary Server", () => {
 
   it("should send a message if no primary server has been selected", async () => {
     serverID = undefined;
-    const owner = {} as User;
+    const owner = { send: jest.fn() } as unknown as User;
     BotProperties.owner = owner;
     const sendSpy = jest.spyOn(owner, "send");
     checkPrimaryServer.next().then(() => expect(sendSpy).toHaveBeenCalled());
@@ -70,7 +69,7 @@ describe("State Check Primary Server", () => {
   it("should set the server upon inputting a valid server", async () => {
     serverID = undefined;
     const ownerID = "owner-id";
-    const author = { id: ownerID } as User;
+    const author = { id: ownerID, send: jest.fn() } as unknown as User;
     BotProperties.owner = author;
     const messageServerIndex = 2; // This is a 1 based index since this is what the user will input
     const message = { client: checkPrimaryServer.bot.client } as Message;
@@ -79,24 +78,27 @@ describe("State Check Primary Server", () => {
     const sendSpy = jest.spyOn(author, "send");
     checkPrimaryServer.createPromise();
     await checkPrimaryServer.handleMessage(message);
-    expect(mockGuilds[1].name).not.toBe(undefined);
-    if (mockGuilds[1].name)
+    expect(currentGuilds[1].name).not.toBe(undefined);
+    if (currentGuilds[1].name)
       expect(sendSpy).toHaveBeenCalledWith(
-        expect.stringContaining(mockGuilds[1].name)
+        expect.stringContaining(currentGuilds[1].name)
       );
-    expect(BotProperties.serverID).toBe(mockGuilds[messageServerIndex - 1].id);
+    expect(BotProperties.serverID).toBe(
+      currentGuilds[messageServerIndex - 1].id
+    );
   });
 
   it("should send the invite link if the bot is not in any servers", async () => {
     serverID = undefined;
-    mockGuilds = [];
-    mockGuildsCache.cache = {
-      values: () => mockGuilds,
-      size: mockGuilds.length,
+    currentGuilds = [];
+    mockGuilds.cache = {
+      values: () => currentGuilds,
+      size: currentGuilds.length,
+      get: jest.fn(),
     };
-    checkPrimaryServer.bot.client.guilds = mockGuildsCache as any;
+    checkPrimaryServer.bot.client.guilds = mockGuilds as any;
     BotProperties.inviteLink = inviteLink;
-    const owner = {} as User;
+    const owner = { send: jest.fn() } as unknown as User;
     BotProperties.owner = owner;
     const sendSpy = jest.spyOn(owner, "send");
     checkPrimaryServer.continueServerSetup().then(() => {
@@ -111,16 +113,20 @@ describe("State Check Primary Server", () => {
 
   it("should fetch server names if they are not cached", () => {
     serverID = undefined;
-    mockGuilds = [
+    currentGuilds = [
       { name: "server-1", id: "abc" },
       { name: undefined, id: "def" },
       { name: undefined, id: "ghi" },
     ];
-    mockGuildsCache.cache = {
-      values: () => mockGuilds,
-      size: mockGuilds.length,
+    mockGuilds = {
+      cache: {
+        values: () => currentGuilds,
+        size: currentGuilds.length,
+        get: jest.fn(),
+      },
+      fetch: (id: string) => validMockGuilds.find((guild) => guild.id === id),
     };
-    checkPrimaryServer.bot.client.guilds = mockGuildsCache as any;
+    checkPrimaryServer.bot.client.guilds = mockGuilds as any;
     const owner = {} as User;
     BotProperties.owner = owner;
     const fetchSpy = jest.spyOn(checkPrimaryServer.bot.client.guilds, "fetch");
@@ -133,7 +139,7 @@ describe("State Check Primary Server", () => {
   it("should not save the primary server if an invalid selection is made", async () => {
     serverID = undefined;
     const ownerID = "owner-id";
-    const author = { id: ownerID } as User;
+    const author = { id: ownerID, send: jest.fn() } as unknown as User;
     BotProperties.owner = author;
     const messageServerIndex = 5;
     const message = { client: checkPrimaryServer.bot.client } as Message;
@@ -148,7 +154,7 @@ describe("State Check Primary Server", () => {
   it("should send the invite link if the last selection is selected", async () => {
     serverID = undefined;
     const ownerID = "owner-id";
-    const author = { id: ownerID } as User;
+    const author = { id: ownerID, send: jest.fn() } as unknown as User;
     BotProperties.owner = author;
     const messageServerIndex = validMockGuilds.length + 1;
     const message = { client: checkPrimaryServer.bot.client } as Message;
@@ -166,12 +172,13 @@ describe("State Check Primary Server", () => {
 
   it("should not process input if someone who isn't the bot's owner sends a message", async () => {
     serverID = undefined;
-    mockGuilds = validMockGuilds;
-    mockGuildsCache.cache = {
-      values: () => mockGuilds,
-      size: mockGuilds.length,
+    currentGuilds = validMockGuilds;
+    mockGuilds.cache = {
+      values: () => currentGuilds,
+      size: currentGuilds.length,
+      get: jest.fn(),
     };
-    checkPrimaryServer.bot.client.guilds = mockGuildsCache as any;
+    checkPrimaryServer.bot.client.guilds = mockGuilds as any;
     const ownerID = "owner-id";
     const authorID = "author-id";
     const owner = { id: ownerID } as User;
@@ -182,12 +189,12 @@ describe("State Check Primary Server", () => {
     message.content = `${messageServerIndex}`;
     message.author = author;
     await checkPrimaryServer.handleMessage(message);
-    expect(mockGuilds[1].name).not.toBe(undefined);
+    expect(currentGuilds[1].name).not.toBe(undefined);
     expect(BotProperties.serverID).toBe(undefined);
   });
 
   it("should say hello when loading for the first time", () => {
-    const owner = {} as User;
+    const owner = { send: jest.fn() } as unknown as User;
     BotProperties.owner = owner;
     const sendSpy = jest.spyOn(owner, "send");
     checkPrimaryServer

@@ -2,7 +2,8 @@ import { spawn } from "child_process";
 import { readdirSync } from "fs";
 import propertiesReader from "properties-reader";
 import onExit from "signal-exit";
-import ps from "ps-node";
+// import ps from "ps-node";
+// import kill from "tree-kill";
 // @ts-ignore
 import NamedPipes from "named-pipes";
 import Log from "../log/log";
@@ -11,7 +12,7 @@ import BedrockHandler from "./handlers/bedrockHandler";
 
 const logger = Log.getLog();
 const properties = propertiesReader("settings.properties");
-const pipeOutput = NamedPipes.listen("bedbot-pipe-output");
+let pipeOutput = NamedPipes.listen("bedbot-pipe-output");
 const isJavaEdition = properties.get("minecraft.isJavaEdition");
 const serverHandler = isJavaEdition ? new JavaHandler() : new BedrockHandler();
 let discordBot: any = null;
@@ -32,7 +33,6 @@ type serverSettingFields =
   | "gamemode"
   | "difficulty";
 
-let serverPID: number;
 const startServer = () => {
   let newServer;
   if (isJavaEdition) {
@@ -45,17 +45,17 @@ const startServer = () => {
       cwd: `bedrock\\${newestFolder}`,
       windowsHide: true,
     });
-    ps.lookup(
-      {
-        command: "bedrock_server.exe",
-      },
-      (err: any, resultList: any) => {
-        if (err) throw new Error(err);
-        if (resultList.length !== 0) {
-          serverPID = resultList[0].pid;
-        }
-      }
-    );
+    // ps.lookup(
+    //   {
+    //     command: "bedrock_server.exe",
+    //   },
+    //   (err: any, resultList: any) => {
+    //     if (err) throw new Error(err);
+    //     if (resultList.length !== 0) {
+    //       serverPID = resultList[0].pid;
+    //     }
+    //   }
+    // );
   }
   newServer.stdout.setEncoding("utf8");
   newServer.stdout?.on("data", (data: any) => {
@@ -74,7 +74,6 @@ const startServer = () => {
     discordBot?.send("server", "shutdown");
     setTimeout(() => process.kill(process.pid, "SIGTERM"), 100); // Doesn't send signal if a timeout isn't set
   });
-  serverHandler.sendPlayers();
   return newServer;
 };
 
@@ -84,7 +83,7 @@ pipeOutput.on("connect", async (client: any) => {
   discordBot = client;
   serverHandler.setDiscordBot(discordBot);
   serverHandler.sendInfo("Output Pipe Connected");
-  serverHandler.sendPlayers();
+  serverHandler.sendSettings();
   // if (Object.keys(serverSettings).length === 7)
   discordBot?.send("settings", JSON.stringify(serverHandler.serverSettings));
   const pipeInput = await NamedPipes.connect("bedbot-pipe-input");
@@ -143,9 +142,10 @@ process.on("unhandledRejection", (error: any) => logger.logError(error.stack));
 
 const exit = () => {
   discordBot?.send("server", "process-shutdown");
-  server?.removeAllListeners();
-  server?.kill();
-  if (serverPID) process.kill(serverPID);
+  pipeOutput = undefined;
+  // @TODO : Find a better way to stop the server.
+  // This way works unless the server just booted, in which case it will finish loading before closing.
+  server?.stdin?.write("stop\n");
 };
 
 onExit(exit);

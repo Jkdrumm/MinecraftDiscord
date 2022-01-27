@@ -12,8 +12,6 @@ export const loadProperties = async () => {
   ServerProperties.rolesChannel = properties
     .getRaw("discord.channel.roles")
     ?.toString();
-  ServerProperties.serverURL = properties.getRaw("server.url")?.toString();
-  ServerProperties.serverPort = properties.get("server.port")?.toString();
 };
 
 export default ServerProperties;

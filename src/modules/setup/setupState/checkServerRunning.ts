@@ -1,6 +1,6 @@
 // @ts-ignore
 import NamedPipes from "named-pipes";
-import util from "minecraft-server-util";
+// import util from "minecraft-server-util";
 import Commands, { loadCommands } from "../../command/commands";
 import Log from "../../log/log";
 import {
@@ -39,7 +39,7 @@ export default class CheckServerRunning extends SetupState {
     });
     this.pipeInput = NamedPipes.listen("bedbot-pipe-input");
     this.pipeInput.on("connect", (client: any) => {
-      this.checkServerStatus();
+      // this.checkServerStatus();
       ServerProperties.server = client;
       this.responseResolver?.(undefined);
     });
@@ -100,18 +100,18 @@ export default class CheckServerRunning extends SetupState {
 
   checkServerStatus = () => {
     if (!ServerProperties.server) this.connectToServer();
-    else if (ServerProperties.serverURL)
-      if (!ServerProperties.isJavaEdition)
-        util
-          .statusBedrock(ServerProperties.serverURL, {
-            port: Number(ServerProperties.serverPort),
-            timeout: 1000,
-          })
-          .catch(() => {
-            // Server is not accesible from the Internet
-            this.setServerStatus(BotStatus.HOSTNAME_PORT_ERROR);
-            setTimeout(this.checkServerStatus, 60000);
-          });
+    // else if (ServerProperties.serverURL)
+    //   if (!ServerProperties.isJavaEdition)
+    //     util
+    //       .statusBedrock(ServerProperties.serverURL, {
+    //         port: Number(ServerProperties.serverPort),
+    //         timeout: 1000,
+    //       })
+    //       .catch(() => {
+    //         // Server is not accesible from the Internet
+    //         this.setServerStatus(BotStatus.HOSTNAME_PORT_ERROR);
+    //         setTimeout(this.checkServerStatus, 60000);
+    //       });
   };
 
   startServer = () => {
@@ -119,10 +119,16 @@ export default class CheckServerRunning extends SetupState {
       // Server is not running, attempt to start server
       ServerProperties.server = undefined;
       this.setServerStatus(BotStatus.RESTARTING);
-      const serverWrapper = spawn("server", {
-        detached: true,
-        stdio: "ignore",
-      });
+      const serverWrapper =
+        process.env.NODE_ENV === "production"
+          ? spawn("server", {
+              detached: true,
+              stdio: "ignore",
+            })
+          : spawn("ts-node", ["src/modules/server/server.ts"], {
+              detached: true,
+              stdio: "ignore",
+            });
       serverWrapper.unref();
       this.attemptedStart = true;
     }
@@ -139,18 +145,24 @@ export default class CheckServerRunning extends SetupState {
     pipeOutput.on("info", (data: string) => this.logger.logInfo(data));
     pipeOutput.on("warn", (warning: string) => this.logger.logWarning(warning));
     pipeOutput.on("error", (error: string) => this.logger.logError(error));
+    pipeOutput.on("settings", (data: string) => {
+      const { players, settings } = JSON.parse(data);
+      this.setServerStatus(BotStatus.ONLINE, Object.keys(players).length);
+      ServerProperties.players = players;
+      ServerProperties.settings = settings;
+    });
     pipeOutput.on("players", (data: string) => {
       const players = JSON.parse(data);
       this.setServerStatus(BotStatus.ONLINE, Object.keys(players).length);
-      BotProperties.players = players;
+      ServerProperties.players = players;
     });
     pipeOutput.on("playerJoined", (data: string) => {
       const { id, username } = JSON.parse(data);
       // const linkedDiscordId = Object.keys(BotProperties.linkedUsers).find(
       //   (discordId) => BotProperties.linkedUsers[discordId] === id
       // );
-      BotProperties.players[id] = username;
-      const numPlayers = Object.keys(BotProperties.players).length;
+      ServerProperties.players[id] = username;
+      const numPlayers = Object.keys(ServerProperties.players).length;
       this.setServerStatus(BotStatus.ONLINE, numPlayers);
       const joinedDiscordId = Object.keys(BotProperties.linkedUsers).find(
         (discordId) => BotProperties.linkedUsers[discordId] === id
@@ -159,7 +171,7 @@ export default class CheckServerRunning extends SetupState {
       // Notify each user as long as they are not currently playing
       BotProperties.notifyUsers["every"]?.forEach((discordId) => {
         if (
-          BotProperties.players[BotProperties.linkedUsers[discordId]] ===
+          ServerProperties.players[BotProperties.linkedUsers[discordId]] ===
           undefined
         ) {
           const content = `${username} ${
@@ -172,7 +184,7 @@ export default class CheckServerRunning extends SetupState {
       });
       BotProperties.notifyUsers[numPlayers]?.forEach((discordId) => {
         if (
-          BotProperties.players[BotProperties.linkedUsers[discordId]] ===
+          ServerProperties.players[BotProperties.linkedUsers[discordId]] ===
           undefined
         ) {
           const content = `There ${
@@ -183,10 +195,10 @@ export default class CheckServerRunning extends SetupState {
       });
     });
     pipeOutput.on("playerDisconnected", (id: string) => {
-      delete BotProperties.players[id];
+      delete ServerProperties.players[id];
       this.setServerStatus(
         BotStatus.ONLINE,
-        Object.keys(BotProperties.players).length
+        Object.keys(ServerProperties.players).length
       );
     });
     pipeOutput.on("get", (input: string) => {
@@ -285,9 +297,9 @@ export default class CheckServerRunning extends SetupState {
             status: "dnd",
             activities: [{ name: currentActivity }],
           });
-          this.logger.logError(
-            `Unable to reach server at ${ServerProperties.serverURL}:${ServerProperties.serverPort}. Are your ports forwarded and is your DNS hostname configured correctly?`
-          );
+          // this.logger.logError(
+          //   `Unable to reach server at ${ServerProperties.serverURL}:${ServerProperties.serverPort}. Are your ports forwarded and is your DNS hostname configured correctly?`
+          // );
           break;
         case BotStatus.ONLINE:
         default:

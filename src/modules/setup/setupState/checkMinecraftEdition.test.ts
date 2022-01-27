@@ -23,7 +23,7 @@ describe("Stat Check Minecraft Edition", () => {
   });
 
   beforeEach(() => {
-    ServerProperties.isJavaEdition = undefined;
+    ServerProperties.isJavaEdition = null;
     checkMinecraftEdition = new CheckMinecraftEdition();
   });
 
@@ -105,13 +105,14 @@ describe("Stat Check Minecraft Edition", () => {
     owner.id = "owner-id";
     BotProperties.owner = owner;
     await checkMinecraftEdition.handleReaction(reaction, owner);
-    expect(ServerProperties.isJavaEdition).toBe(undefined);
+    expect(ServerProperties.isJavaEdition).toBe(null);
   });
 
   it("should fetch the message's author if it is not known for some reason", async () => {
     const owner = { id: "owner-id", send: jest.fn() } as unknown as User;
     const reactionMessage = {
       client: checkMinecraftEdition.bot.client,
+      author: owner,
     } as Message;
     checkMinecraftEdition.reactionMessage = reactionMessage;
     const reaction = {

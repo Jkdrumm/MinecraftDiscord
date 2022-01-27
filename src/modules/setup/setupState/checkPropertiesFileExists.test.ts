@@ -5,6 +5,7 @@ let fileExists: boolean = false;
 
 jest.mock("fs", () => ({
   existsSync: jest.fn(() => fileExists),
+  mkdirSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   readdirSync: () => [],

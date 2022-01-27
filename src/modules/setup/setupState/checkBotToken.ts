@@ -32,8 +32,8 @@ export default class CheckBotToken extends SetupState {
         } else {
           console.log("ERROR: Unable to connect to the Discord API");
           this.rl.close();
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
       }
     }
     this.responsePromise = new Promise<SetupState | undefined>(

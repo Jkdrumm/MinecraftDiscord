@@ -14,7 +14,7 @@ export default class CheckMinecraftEdition extends SetupState {
   next = async () => {
     const isJavaEdition = properties?.get("minecraft.isJavaEdition");
     if (isJavaEdition !== null) {
-      ServerProperties.isJavaEdition = isJavaEdition;
+      ServerProperties.isJavaEdition = isJavaEdition as boolean;
       if (isJavaEdition) return new CheckJavaVersion();
       return new CheckDownloadedServerVersion();
     } else {
@@ -42,7 +42,7 @@ export default class CheckMinecraftEdition extends SetupState {
         ServerProperties.isJavaEdition = false;
         break;
     }
-    if (ServerProperties.isJavaEdition !== undefined) {
+    if (ServerProperties.isJavaEdition !== null) {
       this.cleanupListeners();
       BotProperties.owner?.send(
         `Initializing a ${

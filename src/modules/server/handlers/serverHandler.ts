@@ -53,11 +53,10 @@ export default abstract class ServerHandler {
   }
 
   sendSettings() {
-    this.discordBot?.send("settings", JSON.stringify(this.serverSettings));
-  }
-
-  sendPlayers() {
-    this.discordBot?.send("players", JSON.stringify(this.players));
+    this.discordBot?.send(
+      "settings",
+      JSON.stringify({ players: this.players, settings: this.serverSettings })
+    );
   }
 
   findIdFromUsername(username: string) {

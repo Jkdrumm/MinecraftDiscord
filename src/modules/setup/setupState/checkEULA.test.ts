@@ -17,6 +17,7 @@ jest.mock("fs", () => ({
   readFileSync: jest.fn(() => `# comment\n# comment again\neula=${eula}`),
   writeFileSync: jest.fn(),
   readdirSync: () => [],
+  mkdirSync: jest.fn(),
 }));
 
 jest.mock("properties-reader", () => () => ({
@@ -35,7 +36,7 @@ describe("State Check EULA", () => {
 
   beforeEach(() => {
     checkEULA = new CheckEULA();
-    ServerProperties.isJavaEdition = undefined;
+    ServerProperties.isJavaEdition = null;
     fileExists = false;
     eula = false;
   });
@@ -44,7 +45,9 @@ describe("State Check EULA", () => {
     ServerProperties.isJavaEdition = false;
     const existsSyncSpy = jest.spyOn(fs, "existsSync");
     await checkEULA.next();
-    expect(existsSyncSpy).not.toHaveBeenCalled();
+    expect(existsSyncSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("eula.txt")
+    );
   });
 
   it("should load the EULA file if running a Java Edition server", async () => {
@@ -109,6 +112,7 @@ describe("State Check EULA", () => {
     const owner = { client: checkEULA.bot.client } as User;
     const reactionMessage = {
       client: checkEULA.bot.client,
+      author: owner,
     } as Message;
     checkEULA.reactionMessage = reactionMessage;
     const reaction = {

@@ -18,6 +18,8 @@ jest.mock("fs", () => {
     readdirSync: actual.readdirSync,
     writeFileSync: jest.fn(),
     createWriteStream: () => ({ write: jest.fn() }),
+    existsSync: jest.fn(),
+    mkdirSync: jest.fn(),
   };
 });
 jest.mock("properties-reader", () => () => ({
@@ -26,3 +28,7 @@ jest.mock("properties-reader", () => () => ({
 }));
 
 afterEach(() => jest.clearAllMocks());
+
+process.on("unhandledRejection", (error) => {
+  fail(error);
+});

@@ -13,7 +13,7 @@ describe("Bedrock Handler", () => {
 
   it("should handle players joining", () => {
     const maxPlayers = 3;
-    expect(bedrockHandler.players.length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toBe(0);
     for (let i = 1; i <= maxPlayers; i++) {
       const username = `Player_${i}`;
       const xuid = `TEST-XUID-${i}`;
@@ -40,17 +40,17 @@ describe("Bedrock Handler", () => {
       bedrockHandler.handleData(
         `[1234-56-78 12:34:56:789 INFO] Player disconnected: ${username}, xuid: ${xuid}\n`
       );
-      expect(bedrockHandler.players.length).toBe(i - 1);
+      expect(Object.keys(bedrockHandler.players).length).toBe(i - 1);
       Object.keys(bedrockHandler.players).forEach((id) => {
         const username = bedrockHandler.players[id];
         expect(username === username && id === xuid).toBe(false);
       });
     }
-    expect(bedrockHandler.players.length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toBe(0);
     bedrockHandler.handleData(
       "[1234-56-78 12:34:56:789 INFO] Player disconnected: EXTRA_PLAYER, xuid: TEST-XUID-0\n"
     );
-    expect(bedrockHandler.players.length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toBe(0);
   });
 
   it("should set the minecraft version", () => {

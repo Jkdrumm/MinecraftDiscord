@@ -67,13 +67,10 @@ describe("State Check Bot Token", () => {
     );
     const promise = checkBotToken.next();
     input.send(`${validBotToken}\n`);
-    let rejected = false;
     try {
       await promise;
-    } catch {
-      rejected = true;
-    }
-    expect(rejected).toBeTruthy();
+      fail();
+    } catch {}
     expect(BotProperties.botToken).toBe(undefined);
   });
 
@@ -100,7 +97,11 @@ describe("State Check Bot Token", () => {
     botToken = validBotToken;
     BotProperties.botToken = botToken;
     checkBotToken.bot.login = jest.fn(() => Promise.reject("Unable to login"));
-    expect(await checkBotToken.next()).toBe(undefined);
+    let next;
+    try {
+      next = await checkBotToken.next();
+    } catch {}
+    expect(next).toBe(undefined);
     expect(BotProperties.botToken).toBe(validBotToken);
   });
 
@@ -110,13 +111,10 @@ describe("State Check Bot Token", () => {
     const questionSpy = jest.spyOn(checkBotToken.rl, "question");
     const promise = checkBotToken.next();
     input.send(`${validBotToken}\n`);
-    let rejected = false;
     try {
       await promise;
-    } catch {
-      rejected = true;
-    }
-    expect(rejected).toBe(true);
+      fail();
+    } catch {}
     expect(questionSpy).toHaveBeenCalled();
     expect(BotProperties.botToken).toBe(undefined);
   });

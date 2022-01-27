@@ -8,7 +8,25 @@ export const setProperties = (p: propertiesReader.Reader) => (properties = p);
 export let userProperties: propertiesReader.Reader | undefined;
 export const setUserProperties = (p: propertiesReader.Reader) =>
   (userProperties = p);
-export const ServerProperties: any = {};
+export const ServerProperties: {
+  isJavaEdition: boolean | null;
+  version: string;
+  serverID?: string;
+  rolesChannel?: string;
+  logChannel?: string;
+  server: any;
+  settings: { [setting: string]: string };
+  players: { [discordID: string]: string };
+} = {
+  isJavaEdition: null,
+  version: "",
+  serverID: "",
+  rolesChannel: "",
+  logChannel: "",
+  server: {},
+  settings: {},
+  players: {},
+};
 export let BotProperties: {
   botToken?: string;
   owner?: User;
@@ -21,12 +39,10 @@ export let BotProperties: {
   linkedUsers: { [discordID: string]: string };
   unlinkedUsers: { [discordID: string]: string };
   notifyUsers: { [notificationLevel: string | number]: string[] };
-  players: { [discordID: string]: string };
 } = {
   linkedUsers: {},
   unlinkedUsers: {},
   notifyUsers: {},
-  players: {},
 };
 
 export const clearBotProperties = () =>
@@ -34,5 +50,4 @@ export const clearBotProperties = () =>
     linkedUsers: {},
     unlinkedUsers: {},
     notifyUsers: {},
-    players: {},
   });
