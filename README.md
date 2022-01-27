@@ -41,7 +41,13 @@ Since Discord is already a hub for several of these communities, this tool will 
 npm install
 ```
 
-2. Start the project (Not recommended right now since only the production code works completely)
+2. In order for the server to run through child_process spawn, make sure ts-node is installed globally
+
+```bashrc
+npm install -g ts-node
+```
+
+3. Start the project
 
 ```bashrc
 npm run start
@@ -49,16 +55,10 @@ npm run start
 
 ## Building this project
 
-1. Ensure that pkg is installed globally
-
-```bash rc
-npm install -g pkg
-```
-
-2. Run the build command
+1. Run the build command
 
 ```bashrc
 npm run build
 ```
 
-3. Run "DiscordBot.exe" found in the build folder
+2. Run "DiscordBot.exe" found in the build folder

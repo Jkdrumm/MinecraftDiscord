@@ -1,11 +1,11 @@
 {
   "name": "bedbot",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Discord bot for managing and integrating with a Minecraft Server",
   "repository": "https://github.com/Jkdrumm/MinecraftDiscord",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts",
+    "start": "cross-env NODE_ENV=development ts-node index.ts",
     "start:server": "ts-node src/modules/server/server.ts",
     "build": "tsc && pkg -t node16-win javascript/src/modules/server/server.js --out-path build && pkg -t node16-win javascript/index.js --output build/discordBot",
     "test": "jest",
@@ -36,6 +36,7 @@
     "@types/ps-node": "^0.1.1",
     "@types/signal-exit": "^3.0.1",
     "@types/superagent": "^4.1.14",
+    "cross-env": "^7.0.3",
     "jest": "^27.4.7",
     "mock-stdin": "^1.0.0",
     "pkg": "^5.5.2",

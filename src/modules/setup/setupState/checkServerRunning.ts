@@ -120,12 +120,12 @@ export default class CheckServerRunning extends SetupState {
       ServerProperties.server = undefined;
       this.setServerStatus(BotStatus.RESTARTING);
       const serverWrapper =
-        process.env.NODE_ENV === "production"
-          ? spawn("server", {
+        process.env.NODE_ENV === "development"
+          ? spawn("ts-node", ["src/modules/server/server.ts"], {
               detached: true,
               stdio: "ignore",
             })
-          : spawn("ts-node", ["src/modules/server/server.ts"], {
+          : spawn("server", {
               detached: true,
               stdio: "ignore",
             });
