@@ -27,10 +27,16 @@ describe("Stat Check Minecraft Edition", () => {
     checkMinecraftEdition = new CheckMinecraftEdition();
   });
 
-  it("should load the edition if has been saved", async () => {
+  it("should load the edition if has been saved as Java Edition", async () => {
     isJavaEdition = true;
     await checkMinecraftEdition.next();
-    expect(ServerProperties.isJavaEdition).toBe(true);
+    expect(ServerProperties.isJavaEdition).toEqual(true);
+  });
+
+  it("should load the edition if has been saved as Bedrock Edition", async () => {
+    isJavaEdition = false;
+    await checkMinecraftEdition.next();
+    expect(ServerProperties.isJavaEdition).toEqual(false);
   });
 
   it("should prompt the user to determine which Minecraft to use if no version has been selected", () => {
@@ -61,7 +67,7 @@ describe("Stat Check Minecraft Edition", () => {
     owner.id = "owner-id";
     BotProperties.owner = owner;
     await checkMinecraftEdition.handleReaction(reaction, owner);
-    expect(ServerProperties.isJavaEdition).toBe(true);
+    expect(ServerProperties.isJavaEdition).toEqual(true);
   });
 
   it("should be a bedrock edition server if reacting with 2️⃣", async () => {
@@ -83,7 +89,7 @@ describe("Stat Check Minecraft Edition", () => {
     owner.id = "owner-id";
     BotProperties.owner = owner;
     await checkMinecraftEdition.handleReaction(reaction, owner);
-    expect(ServerProperties.isJavaEdition).toBe(false);
+    expect(ServerProperties.isJavaEdition).toEqual(false);
   });
 
   it("should not set the minecraft edition if a different reaction is used", async () => {
@@ -105,7 +111,7 @@ describe("Stat Check Minecraft Edition", () => {
     owner.id = "owner-id";
     BotProperties.owner = owner;
     await checkMinecraftEdition.handleReaction(reaction, owner);
-    expect(ServerProperties.isJavaEdition).toBe(null);
+    expect(ServerProperties.isJavaEdition).toEqual(null);
   });
 
   it("should fetch the message's author if it is not known for some reason", async () => {
@@ -130,6 +136,6 @@ describe("Stat Check Minecraft Edition", () => {
     };
     BotProperties.owner = owner;
     await checkMinecraftEdition.handleReaction(reaction, owner);
-    expect(reactionMessage.author).toBe(owner);
+    expect(reactionMessage.author).toEqual(owner);
   });
 });

@@ -13,17 +13,17 @@ describe("Bedrock Handler", () => {
 
   it("should handle players joining", () => {
     const maxPlayers = 3;
-    expect(Object.keys(bedrockHandler.players).length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toEqual(0);
     for (let i = 1; i <= maxPlayers; i++) {
       const username = `Player_${i}`;
       const xuid = `TEST-XUID-${i}`;
       bedrockHandler.handleData(
         `[1234-56-78 12:34:56:789 INFO] Player connected: ${username}, xuid: ${xuid}\n`
       );
-      expect(Object.keys(bedrockHandler.players).length).toBe(i);
+      expect(Object.keys(bedrockHandler.players).length).toEqual(i);
       const id = Object.keys(bedrockHandler.players)[i - 1];
-      expect(bedrockHandler.players[id]).toBe(username);
-      expect(id).toBe(xuid);
+      expect(bedrockHandler.players[id]).toEqual(username);
+      expect(id).toEqual(xuid);
     }
   });
 
@@ -40,17 +40,17 @@ describe("Bedrock Handler", () => {
       bedrockHandler.handleData(
         `[1234-56-78 12:34:56:789 INFO] Player disconnected: ${username}, xuid: ${xuid}\n`
       );
-      expect(Object.keys(bedrockHandler.players).length).toBe(i - 1);
+      expect(Object.keys(bedrockHandler.players).length).toEqual(i - 1);
       Object.keys(bedrockHandler.players).forEach((id) => {
         const username = bedrockHandler.players[id];
-        expect(username === username && id === xuid).toBe(false);
+        expect(username === username && id === xuid).toEqual(false);
       });
     }
-    expect(Object.keys(bedrockHandler.players).length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toEqual(0);
     bedrockHandler.handleData(
       "[1234-56-78 12:34:56:789 INFO] Player disconnected: EXTRA_PLAYER, xuid: TEST-XUID-0\n"
     );
-    expect(Object.keys(bedrockHandler.players).length).toBe(0);
+    expect(Object.keys(bedrockHandler.players).length).toEqual(0);
   });
 
   it("should set the minecraft version", () => {
@@ -58,7 +58,7 @@ describe("Bedrock Handler", () => {
     bedrockHandler.handleData(
       `[1234-56-78 12:34:56:789 INFO] Version ${testVersion}\n`
     );
-    expect(bedrockHandler.serverSettings.version).toBe(testVersion);
+    expect(bedrockHandler.serverSettings.version).toEqual(testVersion);
   });
 
   it("should set the ipv4 port", () => {
@@ -66,7 +66,7 @@ describe("Bedrock Handler", () => {
     bedrockHandler.handleData(
       `[1234-56-78 12:34:56:789 INFO] IPv4 supported, port: ${ipv4}\n`
     );
-    expect(bedrockHandler.serverSettings.ipv4).toBe(ipv4);
+    expect(bedrockHandler.serverSettings.ipv4).toEqual(ipv4);
   });
 
   it("should set the ipv6 port", () => {
@@ -74,7 +74,7 @@ describe("Bedrock Handler", () => {
     bedrockHandler.handleData(
       `[1234-56-78 12:34:56:789 INFO] IPv6 supported, port: ${ipv6}\n`
     );
-    expect(bedrockHandler.serverSettings.ipv6).toBe(ipv6);
+    expect(bedrockHandler.serverSettings.ipv6).toEqual(ipv6);
   });
 
   it("should set the level name", () => {
@@ -82,7 +82,7 @@ describe("Bedrock Handler", () => {
     bedrockHandler.handleData(
       `[1234-56-78 12:34:56:789 INFO] Level Name: ${level}\n`
     );
-    expect(bedrockHandler.serverSettings.level).toBe(level);
+    expect(bedrockHandler.serverSettings.level).toEqual(level);
   });
 
   it("should set the server session", () => {
@@ -90,21 +90,21 @@ describe("Bedrock Handler", () => {
     bedrockHandler.handleData(
       `[1234-56-78 12:34:56:789 INFO] Session ID ${session}\n`
     );
-    expect(bedrockHandler.serverSettings.session).toBe(session);
+    expect(bedrockHandler.serverSettings.session).toEqual(session);
   });
 
   it("should set the gamemode", () => {
     bedrockHandler.handleData(
       "[1234-56-78 12:34:56:789 INFO] Game mode: 0 Survival\n"
     );
-    expect(bedrockHandler.serverSettings.gamemode).toBe("Survival");
+    expect(bedrockHandler.serverSettings.gamemode).toEqual("Survival");
   });
 
   it("should set the difficulty", () => {
     bedrockHandler.handleData(
       "[1234-56-78 12:34:56:789 INFO] Difficulty: 2 NORMAL\n"
     );
-    expect(bedrockHandler.serverSettings.difficulty).toBe("Normal");
+    expect(bedrockHandler.serverSettings.difficulty).toEqual("Normal");
   });
 
   it("should send the settings", () => {

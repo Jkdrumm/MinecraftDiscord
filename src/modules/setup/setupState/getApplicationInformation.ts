@@ -20,7 +20,7 @@ export default class GetApplicationInformation extends SetupState {
       BotProperties.inviteLink = `https://discord.com/api/oauth2/authorize?client_id=${BotProperties.applicationId}&permissions=8&scope=bot`;
       return new CheckPrimaryServer();
     } else {
-      return Promise.reject(new Error("Unable to get Application Information"));
+      return Promise.reject("Unable to get Application Information");
     }
   };
 }

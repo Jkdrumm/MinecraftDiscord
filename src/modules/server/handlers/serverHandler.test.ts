@@ -18,7 +18,7 @@ describe("Server Handler", () => {
   it("should set the discord bot", () => {
     const discordBot = "anything is allowed here technically";
     serverHandler.setDiscordBot(discordBot);
-    expect(serverHandler.discordBot).toBe(discordBot);
+    expect(serverHandler.discordBot).toEqual(discordBot);
   });
 
   it("should send info", () => {

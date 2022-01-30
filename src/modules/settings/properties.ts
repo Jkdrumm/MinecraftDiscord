@@ -17,6 +17,7 @@ export const ServerProperties: {
   server: any;
   settings: { [setting: string]: string };
   players: { [discordID: string]: string };
+  domainName: string | false;
 } = {
   isJavaEdition: null,
   version: "",
@@ -26,6 +27,7 @@ export const ServerProperties: {
   server: {},
   settings: {},
   players: {},
+  domainName: false,
 };
 export let BotProperties: {
   botToken?: string;

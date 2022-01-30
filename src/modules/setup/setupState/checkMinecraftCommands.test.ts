@@ -36,8 +36,8 @@ describe("State Check Minecraft Commands", () => {
       { key: "command.say", value: Permission.owner },
     ];
     await checkMinecraftCommands.next();
-    expect(MinecraftCommands.ban.permission).toBe(Permission.user);
-    expect(MinecraftCommands.say.permission).toBe(Permission.owner);
+    expect(MinecraftCommands.ban.permission).toEqual(Permission.user);
+    expect(MinecraftCommands.say.permission).toEqual(Permission.owner);
   });
 
   it("should load defaults if not saved", async () => {
@@ -48,7 +48,7 @@ describe("State Check Minecraft Commands", () => {
       await checkMinecraftCommands.next();
       expect(saveSpy).toHaveBeenCalled();
     }
-    expect(MinecraftCommands.ban.permission).toBe(new Ban().permission);
-    expect(MinecraftCommands.say.permission).toBe(new Say().permission);
+    expect(MinecraftCommands.ban.permission).toEqual(new Ban().permission);
+    expect(MinecraftCommands.say.permission).toEqual(new Say().permission);
   });
 });

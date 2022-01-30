@@ -35,7 +35,7 @@ export default class CheckJavaVersion extends SetupState {
       return callback(undefined, err);
     });
     let fullData = "";
-    checkVersion.stderr.on("data", (data: string) => {
+    checkVersion.on("data", (data: string) => {
       fullData += data;
     });
     checkVersion.on("exit", () => {
@@ -49,6 +49,7 @@ export default class CheckJavaVersion extends SetupState {
         callback(undefined);
       }
     });
+    return checkVersion;
   };
 
   reactionOptions = async (emoji: string) => {

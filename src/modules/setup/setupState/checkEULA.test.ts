@@ -131,7 +131,7 @@ describe("State Check EULA", () => {
     owner.id = "owner-id";
     BotProperties.owner = owner;
     await checkEULA.handleReaction(reaction, owner);
-    expect(reactionMessage.author).toBe(owner);
+    expect(reactionMessage.author).toEqual(owner);
   });
 
   it("should not agree to the EULA if a different reaction is used", async () => {

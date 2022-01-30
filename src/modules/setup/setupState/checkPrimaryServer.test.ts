@@ -1,4 +1,4 @@
-import { Message, User } from "discord.js";
+import { Guild, Message, User } from "discord.js";
 import propertiesReader from "properties-reader";
 import {
   BotProperties,
@@ -32,8 +32,11 @@ jest.mock("properties-reader", () => () => ({
 jest.mock("discord.js", () => {
   const mock = jest.createMockFromModule("discord.js") as any;
   mock.Client = class {
-    on = jest.fn();
-    removeAllListeners = jest.fn();
+    events: { [eventName: string]: () => void } = {};
+    on = (event: string, callback: () => void) =>
+      (this.events[event] = callback);
+    removeAllListeners = (event: string) => delete this.events[event];
+    emit = (event: string) => this.events[event]();
     guilds = mockGuilds;
   };
   return mock;
@@ -54,16 +57,24 @@ describe("State Check Primary Server", () => {
   it("should load the Server ID if already saved", async () => {
     serverID = validServerID;
     await checkPrimaryServer.next();
-    expect(BotProperties.serverID).toBe(serverID);
+    expect(BotProperties.serverID).toEqual(serverID);
   });
 
-  it("should send a message if no primary server has been selected", async () => {
+  it("should send a message if no primary Discord server has been selected", async () => {
     serverID = undefined;
     const owner = { send: jest.fn() } as unknown as User;
     BotProperties.owner = owner;
     const sendSpy = jest.spyOn(owner, "send");
     checkPrimaryServer.next().then(() => expect(sendSpy).toHaveBeenCalled());
     checkPrimaryServer.responseResolver?.(undefined);
+  });
+
+  it("should send a message after joining a new Discord server", async () => {
+    serverID = undefined;
+    checkPrimaryServer.next();
+    const continueSpy = jest.spyOn(checkPrimaryServer, "continueServerSetup");
+    checkPrimaryServer.bot.client.emit("guildCreate", {} as Guild);
+    expect(continueSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should set the server upon inputting a valid server", async () => {
@@ -78,12 +89,12 @@ describe("State Check Primary Server", () => {
     const sendSpy = jest.spyOn(author, "send");
     checkPrimaryServer.createPromise();
     await checkPrimaryServer.handleMessage(message);
-    expect(currentGuilds[1].name).not.toBe(undefined);
+    expect(currentGuilds[1].name).not.toEqual(undefined);
     if (currentGuilds[1].name)
       expect(sendSpy).toHaveBeenCalledWith(
         expect.stringContaining(currentGuilds[1].name)
       );
-    expect(BotProperties.serverID).toBe(
+    expect(BotProperties.serverID).toEqual(
       currentGuilds[messageServerIndex - 1].id
     );
   });
@@ -102,7 +113,7 @@ describe("State Check Primary Server", () => {
     BotProperties.owner = owner;
     const sendSpy = jest.spyOn(owner, "send");
     checkPrimaryServer.continueServerSetup().then(() => {
-      expect(BotProperties.inviteLink).toBe(inviteLink);
+      expect(BotProperties.inviteLink).toEqual(inviteLink);
       if (BotProperties.inviteLink)
         expect(sendSpy).toHaveBeenCalledWith(
           expect.stringContaining(BotProperties.inviteLink)
@@ -148,7 +159,7 @@ describe("State Check Primary Server", () => {
     const sendSpy = jest.spyOn(author, "send");
     await checkPrimaryServer.handleMessage(message);
     expect(sendSpy).toHaveBeenCalled();
-    expect(BotProperties.serverID).toBe(undefined);
+    expect(BotProperties.serverID).toEqual(undefined);
   });
 
   it("should send the invite link if the last selection is selected", async () => {
@@ -167,7 +178,7 @@ describe("State Check Primary Server", () => {
       expect(sendSpy).toHaveBeenCalledWith(
         expect.stringContaining(BotProperties.inviteLink)
       );
-    expect(BotProperties.serverID).toBe(undefined);
+    expect(BotProperties.serverID).toEqual(undefined);
   });
 
   it("should not process input if someone who isn't the bot's owner sends a message", async () => {
@@ -189,8 +200,8 @@ describe("State Check Primary Server", () => {
     message.content = `${messageServerIndex}`;
     message.author = author;
     await checkPrimaryServer.handleMessage(message);
-    expect(currentGuilds[1].name).not.toBe(undefined);
-    expect(BotProperties.serverID).toBe(undefined);
+    expect(currentGuilds[1].name).not.toEqual(undefined);
+    expect(BotProperties.serverID).toEqual(undefined);
   });
 
   it("should say hello when loading for the first time", () => {

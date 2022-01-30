@@ -13,17 +13,17 @@ describe("Java Handler", () => {
 
   it("should handle players joining", () => {
     const maxPlayers = 3;
-    expect(Object.keys(javaHandler.players).length).toBe(0);
+    expect(Object.keys(javaHandler.players).length).toEqual(0);
     for (let i = 1; i <= maxPlayers; i++) {
       const username = `Player_${i}`;
       const uuid = `TEST-UUID-${i}`;
       javaHandler.handleData(
         `[12:34:56] [User Authenticator #1/INFO]: UUID of player ${username} is ${uuid}\n`
       );
-      expect(Object.keys(javaHandler.players).length).toBe(i);
+      expect(Object.keys(javaHandler.players).length).toEqual(i);
       const id = Object.keys(javaHandler.players)[i - 1];
-      expect(javaHandler.players[id]).toBe(username);
-      expect(id).toBe(uuid);
+      expect(javaHandler.players[id]).toEqual(username);
+      expect(id).toEqual(uuid);
     }
   });
 
@@ -40,17 +40,17 @@ describe("Java Handler", () => {
       javaHandler?.handleData(
         `[12:34:56] [Server thread/INFO]: ${username} left the game\n`
       );
-      expect(Object.keys(javaHandler.players).length).toBe(i - 1);
+      expect(Object.keys(javaHandler.players).length).toEqual(i - 1);
       Object.keys(javaHandler.players).forEach((id) => {
         const username = javaHandler.players[id];
-        expect(username === username && id === uuid).toBe(false);
+        expect(username === username && id === uuid).toEqual(false);
       });
     }
-    expect(Object.keys(javaHandler.players).length).toBe(0);
+    expect(Object.keys(javaHandler.players).length).toEqual(0);
     javaHandler.handleData(
       "[12:34:56] [Server thread/INFO]: Extra_Player left the game\n"
     );
-    expect(Object.keys(javaHandler.players).length).toBe(0);
+    expect(Object.keys(javaHandler.players).length).toEqual(0);
   });
 
   it("should set the minecraft version", () => {
@@ -58,7 +58,7 @@ describe("Java Handler", () => {
     javaHandler.handleData(
       `[12:34:56] [Server thread/INFO]: Starting minecraft server version ${testVersion}\n`
     );
-    expect(javaHandler.serverSettings.version).toBe(testVersion);
+    expect(javaHandler.serverSettings.version).toEqual(testVersion);
   });
 
   it("should set the ipv4 port", () => {
@@ -66,7 +66,7 @@ describe("Java Handler", () => {
     javaHandler.handleData(
       `[12:34:56] [Server thread/INFO]: Starting Minecraft server on *:${ipv4}\n`
     );
-    expect(javaHandler.serverSettings.ipv4).toBe(ipv4);
+    expect(javaHandler.serverSettings.ipv4).toEqual(ipv4);
   });
 
   it("should set the level name", () => {
@@ -74,14 +74,14 @@ describe("Java Handler", () => {
     javaHandler.handleData(
       `[12:34:56] [Server thread/INFO]: Preparing level "${level}"\n`
     );
-    expect(javaHandler.serverSettings.level).toBe(level);
+    expect(javaHandler.serverSettings.level).toEqual(level);
   });
 
   it("should set the gamemode", () => {
     javaHandler.handleData(
       "[12:34:56] [Server thread/INFO]: Default game type: SURVIVAL\n"
     );
-    expect(javaHandler.serverSettings.gamemode).toBe("Survival");
+    expect(javaHandler.serverSettings.gamemode).toEqual("Survival");
   });
 
   it("should send the settings", () => {

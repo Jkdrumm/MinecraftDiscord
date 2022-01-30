@@ -71,7 +71,7 @@ describe("State Check Bot Token", () => {
       await promise;
       fail();
     } catch {}
-    expect(BotProperties.botToken).toBe(undefined);
+    expect(BotProperties.botToken).toEqual(undefined);
   });
 
   it("should login to Discord when a valid bot token is entered", async () => {
@@ -84,13 +84,13 @@ describe("State Check Bot Token", () => {
     input.send(`${validBotToken}\n`);
     await promise;
     expect(questionSpy).toHaveBeenCalled();
-    expect(BotProperties.botToken).toBe(validBotToken);
+    expect(BotProperties.botToken).toEqual(validBotToken);
   });
 
   it("should login to Discord when a bot token is saved", async () => {
     botToken = validBotToken;
     await checkBotToken.next();
-    expect(BotProperties.botToken).toBe(botToken);
+    expect(BotProperties.botToken).toEqual(botToken);
   });
 
   it("should exit if it cannot connect to Discord with a saved bot token", async () => {
@@ -101,8 +101,8 @@ describe("State Check Bot Token", () => {
     try {
       next = await checkBotToken.next();
     } catch {}
-    expect(next).toBe(undefined);
-    expect(BotProperties.botToken).toBe(validBotToken);
+    expect(next).toEqual(undefined);
+    expect(BotProperties.botToken).toEqual(validBotToken);
   });
 
   it("should exit if it cannot connect to Discord after asking for the bot token", async () => {
@@ -116,7 +116,7 @@ describe("State Check Bot Token", () => {
       fail();
     } catch {}
     expect(questionSpy).toHaveBeenCalled();
-    expect(BotProperties.botToken).toBe(undefined);
+    expect(BotProperties.botToken).toEqual(undefined);
   });
 
   it("should save an empty bot token when an invalid one is loaded, and ask for a new token", async () => {
@@ -127,7 +127,7 @@ describe("State Check Bot Token", () => {
     const questionSpy = jest.spyOn(checkBotToken.rl, "question");
     checkBotToken.next().then(() => {
       expect(questionSpy).toHaveBeenCalled();
-      expect(BotProperties.botToken).toBe(undefined);
+      expect(BotProperties.botToken).toEqual(undefined);
     });
     checkBotToken.responseResolver?.(undefined);
   });

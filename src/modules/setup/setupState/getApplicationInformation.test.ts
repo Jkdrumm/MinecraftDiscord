@@ -1,4 +1,4 @@
-import { User } from "discord.js";
+import { ClientApplication, User } from "discord.js";
 import { BotProperties, clearBotProperties } from "../../settings/properties";
 import GetApplicationInformation from "./getApplicationInformation";
 
@@ -16,7 +16,7 @@ jest.mock("discord.js", () => {
     users = {
       fetch: jest.fn(() => owner),
     };
-    on() {}
+    on = jest.fn();
   };
   return discordJS;
 });
@@ -31,17 +31,27 @@ describe("State Get Application Information", () => {
 
   it("should get the application's Discord ID", async () => {
     await getApplicationInformation.next();
-    expect(BotProperties.applicationId).toBe(id);
+    expect(BotProperties.applicationId).toEqual(id);
   });
 
   it("should get the bot's owner", async () => {
     await getApplicationInformation.next();
-    expect(BotProperties.owner).toBe(owner);
+    expect(BotProperties.owner).toEqual(owner);
   });
 
   it("should create an invite link", () => {
     const inviteLink =
       (BotProperties.inviteLink = `https://discord.com/api/oauth2/authorize?client_id=${id}&permissions=8&scope=bot`);
-    expect(BotProperties.inviteLink).toBe(inviteLink);
+    expect(BotProperties.inviteLink).toEqual(inviteLink);
+  });
+
+  it("should reject the promise if it cannot get the application", async () => {
+    getApplicationInformation.bot.client.application = {
+      partial: true,
+      fetch: () => null,
+    } as unknown as ClientApplication;
+    expect(getApplicationInformation.next()).rejects.toEqual(
+      "Unable to get Application Information"
+    );
   });
 });

@@ -80,26 +80,26 @@ describe("State Check Downloaded Server Version", () => {
   it("should load the most current version saved if it is the newest version for Java Edition", async () => {
     ServerProperties.isJavaEdition = true;
     await checkDownloadedServerVersion.next();
-    expect(ServerProperties.version).toBe("newest");
+    expect(ServerProperties.version).toEqual("newest");
   });
 
   it("should load the most current version saved if it is the newest version for Bedrock Edition", async () => {
     ServerProperties.isJavaEdition = false;
     await checkDownloadedServerVersion.next();
-    expect(ServerProperties.version).toBe("newest");
+    expect(ServerProperties.version).toEqual("newest");
   });
 
   it("should download the most current version if it is not already installed for Java Edition", async () => {
     ServerProperties.isJavaEdition = true;
     currentVersion = "old";
     await checkDownloadedServerVersion.next();
-    expect(ServerProperties.version).toBe("newest");
+    expect(ServerProperties.version).toEqual("newest");
   });
 
   it("should download the most current version if it is not already installed for Bedrock Edition", async () => {
     ServerProperties.isJavaEdition = false;
     currentVersion = "old";
     await checkDownloadedServerVersion.next();
-    expect(ServerProperties.version).toBe("newest");
+    expect(ServerProperties.version).toEqual("newest");
   });
 });
